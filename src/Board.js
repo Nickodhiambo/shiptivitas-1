@@ -8,6 +8,7 @@ export default class Board extends React.Component {
   constructor(props) {
     super(props);
     const clients = this.getClients();
+    
     this.state = {
       clients: {
         backlog: clients.filter(client => !client.status || client.status === 'backlog'),
