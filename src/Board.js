@@ -8,7 +8,7 @@ export default class Board extends React.Component {
   constructor(props) {
     super(props);
     const clients = this.getClients();
-    
+
     this.state = {
       clients: {
         backlog: clients,
@@ -23,64 +23,95 @@ export default class Board extends React.Component {
     }
   }
 
-  componentDidMount(){
+  componentDidMount() {
     const containers = [
-      this.swimlanes.backlog.current,
-      this.swimlanes.inProgress.current,
-      this.swimlanes.complete.current
-    ]
+      this.swimlanes.backlog.current.querySelector('.Swimlane-dragColumn'),
+      this.swimlanes.inProgress.current.querySelector('.Swimlane-dragColumn'),
+      this.swimlanes.complete.current.querySelector('.Swimlane-dragColumn'),
+    ];
 
-    const drake = Dragula(containers)
+    const drake = Dragula(containers);
 
     drake.on('drop', (el, target, source, sibling) => {
       const clientId = el.getAttribute('data-id');
       const newStatus = target.getAttribute('data-status');
-      this.updateClientStatus(clientId, newStatus)
-    })
+      const oldStatus = source.getAttribute('data-status');
+
+      if (newStatus === oldStatus) {
+        this.rearrangeClientsWithinSwimlane(clientId, newStatus, sibling);
+      } else {
+        this.updateClientStatus(clientId, newStatus);
+      }
+    });
   }
 
-updateClientStatus(clientId, newStatus){
-  this.setState((prevState) => {
-    const allClients = [...prevState.clients.backlog, ...prevState.clients.inProgress, ...prevState.clients.complete]
-    const updatedClients = allClients.map(client => {
-      if (client.id === clientId){
-        return {...client, status: newStatus}
-      }
-      return client
-    })
+  rearrangeClientsWithinSwimlane(clientId, status, sibling) {
+    this.setState((prevState) => {
+      console.log('Previous state:', prevState);
+      const clients = [...prevState.clients[status]];
+      const clientIndex = clients.findIndex(client => client.id === clientId);
+      const client = clients.splice(clientIndex, 1)[0];
 
-    return {
-      clients: {
-        backlog: updatedClients.filter(client => client.status === 'backlog'),
-        inProgress: updatedClients.filter(client => client.status === 'in-progress'),
-        complete: updatedClients.filter(client => client.status === 'complete'),
+      if (sibling) {
+        const siblingId = sibling.getAttribute('data-id');
+        const siblingIndex = clients.findIndex(client => client.id === siblingId);
+        clients.splice(siblingIndex, 0, client);
+      } else {
+        clients.push(client);
       }
-    };
-  })
-}
+
+      return {
+        clients: {
+          ...prevState.clients,
+          [status]: clients,
+        }
+      };
+    });
+  }
+
+  updateClientStatus(clientId, newStatus) {
+    this.setState((prevState) => {
+      console.log('Previous state:', prevState);
+      const allClients = [...prevState.clients.backlog, ...prevState.clients.inProgress, ...prevState.clients.complete];
+      const updatedClients = allClients.map(client => {
+        if (client.id === clientId) {
+          return { ...client, status: newStatus };
+        }
+        return client;
+      });
+
+      return {
+        clients: {
+          backlog: updatedClients.filter(client => client.status === 'backlog'),
+          inProgress: updatedClients.filter(client => client.status === 'in-progress'),
+          complete: updatedClients.filter(client => client.status === 'complete'),
+        }
+      };
+    });
+  }
 
   getClients() {
     return [
-      ['1','Stark, White and Abbott','Cloned Optimal Architecture'],
-      ['2','Wiza LLC','Exclusive Bandwidth-Monitored Implementation'],
-      ['3','Nolan LLC','Vision-Oriented 4Thgeneration Graphicaluserinterface'],
-      ['4','Thompson PLC','Streamlined Regional Knowledgeuser'],
-      ['5','Walker-Williamson','Team-Oriented 6Thgeneration Matrix'],
-      ['6','Boehm and Sons','Automated Systematic Paradigm'],
-      ['7','Runolfsson, Hegmann and Block','Integrated Transitional Strategy'],
-      ['8','Schumm-Labadie','Operative Heuristic Challenge'],
-      ['9','Kohler Group','Re-Contextualized Multi-Tasking Attitude'],
-      ['10','Romaguera Inc','Managed Foreground Toolset'],
-      ['11','Reilly-King','Future-Proofed Interactive Toolset'],
-      ['12','Emard, Champlin and Runolfsdottir','Devolved Needs-Based Capability'],
-      ['13','Fritsch, Cronin and Wolff','Open-Source 3Rdgeneration Website'],
-      ['14','Borer LLC','Profit-Focused Incremental Orchestration'],
-      ['15','Emmerich-Ankunding','User-Centric Stable Extranet'],
-      ['16','Willms-Abbott','Progressive Bandwidth-Monitored Access'],
-      ['17','Brekke PLC','Intuitive User-Facing Customerloyalty'],
-      ['18','Bins, Toy and Klocko','Integrated Assymetric Software'],
-      ['19','Hodkiewicz-Hayes','Programmable Systematic Securedline'],
-      ['20','Murphy, Lang and Ferry','Organized Explicit Access'],
+      ['1', 'Stark, White and Abbott', 'Cloned Optimal Architecture'],
+      ['2', 'Wiza LLC', 'Exclusive Bandwidth-Monitored Implementation'],
+      ['3', 'Nolan LLC', 'Vision-Oriented 4Thgeneration Graphicaluserinterface'],
+      ['4', 'Thompson PLC', 'Streamlined Regional Knowledgeuser'],
+      ['5', 'Walker-Williamson', 'Team-Oriented 6Thgeneration Matrix'],
+      ['6', 'Boehm and Sons', 'Automated Systematic Paradigm'],
+      ['7', 'Runolfsson, Hegmann and Block', 'Integrated Transitional Strategy'],
+      ['8', 'Schumm-Labadie', 'Operative Heuristic Challenge'],
+      ['9', 'Kohler Group', 'Re-Contextualized Multi-Tasking Attitude'],
+      ['10', 'Romaguera Inc', 'Managed Foreground Toolset'],
+      ['11', 'Reilly-King', 'Future-Proofed Interactive Toolset'],
+      ['12', 'Emard, Champlin and Runolfsdottir', 'Devolved Needs-Based Capability'],
+      ['13', 'Fritsch, Cronin and Wolff', 'Open-Source 3Rdgeneration Website'],
+      ['14', 'Borer LLC', 'Profit-Focused Incremental Orchestration'],
+      ['15', 'Emmerich-Ankunding', 'User-Centric Stable Extranet'],
+      ['16', 'Willms-Abbott', 'Progressive Bandwidth-Monitored Access'],
+      ['17', 'Brekke PLC', 'Intuitive User-Facing Customerloyalty'],
+      ['18', 'Bins, Toy and Klocko', 'Integrated Assymetric Software'],
+      ['19', 'Hodkiewicz-Hayes', 'Programmable Systematic Securedline'],
+      ['20', 'Murphy, Lang and Ferry', 'Organized Explicit Access'],
     ].map(companyDetails => ({
       id: companyDetails[0],
       name: companyDetails[1],
@@ -91,7 +122,7 @@ updateClientStatus(clientId, newStatus){
 
   renderSwimlane(name, clients, ref) {
     return (
-      <Swimlane name={name} clients={clients} dragulaRef={ref}/>
+      <Swimlane name={name} clients={clients} dragulaRef={ref} />
     );
   }
 
