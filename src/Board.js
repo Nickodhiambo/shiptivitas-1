@@ -8,7 +8,6 @@ export default class Board extends React.Component {
   constructor(props) {
     super(props);
     const clients = this.getClients();
-    
     this.state = {
       clients: {
         backlog: clients,
@@ -46,45 +45,98 @@ export default class Board extends React.Component {
   }
 
   updateClientStatus(clientId, newStatus) {
-    this.setState((prevState) => {
-      const allClients = [...prevState.clients.backlog, ...prevState.clients.inProgress, ...prevState.clients.complete];
-      const updatedClients = allClients.map(client => {
-        if (client.id === clientId) {
-          return { ...client, status: newStatus };
-        }
-        return client;
-      });
+    this.setState(prevState => {
+        const { clients } = prevState;
 
-      return {
-        clients: {
-          backlog: updatedClients.filter(client => client.status === 'backlog'),
-          inProgress: updatedClients.filter(client => client.status === 'in-progress'),
-          complete: updatedClients.filter(client => client.status === 'complete'),
+        // Find the current status of the client
+        let currentStatus;
+        let clientDetails;
+        for (const status in clients) {
+            const client = clients[status].find(client => client.id === clientId)
+            if (client){
+                currentStatus = status;
+                clientDetails = client;
+                break;
+            }
         }
-      };
+
+        const { name, description } = clientDetails
+
+        // Remove the client from the current status
+        const updatedClients = clients[currentStatus].filter(client => client.id !== clientId)
+
+        // If the new status is different from the current status,
+        // add the client to the new status
+        if (currentStatus !== newStatus) {
+            updatedClients.push({
+                id: clientId,
+                // You may need to fetch other details of the client from the previous state
+                // based on the clientId
+                name: name,
+                description: description,
+                status: newStatus,
+            });
+        }
+
+        // Update the state
+        return {
+            clients: {
+                ...clients,
+                [currentStatus]: updatedClients,
+            },
+        };
     });
-  }
+}
 
-  rearrangeClientsWithinSwimlane(clientId, status, sibling) {
+
+
+  rearrangeClientsWithinSwimlane(clientId, targetStatus, sibling) {
     this.setState((prevState) => {
-      const clients = [...prevState.clients[status]];
-      const clientIndex = clients.findIndex(client => client.id === clientId);
-      const client = clients.splice(clientIndex, 1)[0];
+      const sourceStatus = Object.keys(prevState.clients).find(key => prevState.clients[key].find(client => client.id === clientId));
 
-      if (sibling) {
-        const siblingId = sibling.getAttribute('data-id');
-        const siblingIndex = clients.findIndex(client => client.id === siblingId);
-        clients.splice(siblingIndex, 0, client);
-      } else {
-        clients.push(client);
-      }
+      if (sourceStatus === targetStatus) {
+        // Rearrange within the same swimlane
+        const clients = [...prevState.clients[sourceStatus]];
+        const clientIndex = clients.findIndex(client => client.id === clientId);
+        const client = clients.splice(clientIndex, 1)[0];
 
-      return {
-        clients: {
-          ...prevState.clients,
-          [status]: clients,
+        if (sibling) {
+          const siblingId = sibling.getAttribute('data-id');
+          const siblingIndex = clients.findIndex(client => client.id === siblingId);
+          clients.splice(siblingIndex, 0, client);
+        } else {
+          clients.push(client);
         }
-      };
+
+        return {
+          clients: {
+            ...prevState.clients,
+            [sourceStatus]: clients,
+          }
+        };
+      } else {
+        // Move to a different swimlane
+        const sourceClients = [...prevState.clients[sourceStatus]];
+        const targetClients = [...prevState.clients[targetStatus]];
+        const clientIndex = sourceClients.findIndex(client => client.id === clientId);
+        const client = sourceClients.splice(clientIndex, 1)[0];
+
+        if (sibling) {
+          const siblingId = sibling.getAttribute('data-id');
+          const siblingIndex = targetClients.findIndex(client => client.id === siblingId);
+          targetClients.splice(siblingIndex, 0, client);
+        } else {
+          targetClients.push(client);
+        }
+
+        return {
+          clients: {
+            ...prevState.clients,
+            [sourceStatus]: sourceClients,
+            [targetStatus]: targetClients,
+          }
+        };
+      }
     });
   }
 
