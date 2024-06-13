@@ -48,7 +48,6 @@ export default class Board extends React.Component {
     this.setState(prevState => {
         const { clients } = prevState;
 
-        // Find the current status of the client
         let currentStatus;
         let clientDetails;
         for (const status in clients) {
@@ -62,23 +61,18 @@ export default class Board extends React.Component {
 
         const { name, description } = clientDetails
 
-        // Remove the client from the current status
         const updatedClients = clients[currentStatus].filter(client => client.id !== clientId)
+        console.log(updatedClients)
 
-        // If the new status is different from the current status,
-        // add the client to the new status
         if (currentStatus !== newStatus) {
             updatedClients.push({
                 id: clientId,
-                // You may need to fetch other details of the client from the previous state
-                // based on the clientId
                 name: name,
                 description: description,
                 status: newStatus,
             });
         }
 
-        // Update the state
         return {
             clients: {
                 ...clients,
@@ -86,16 +80,14 @@ export default class Board extends React.Component {
             },
         };
     });
+    console.log(this.state)
 }
-
-
 
   rearrangeClientsWithinSwimlane(clientId, targetStatus, sibling) {
     this.setState((prevState) => {
       const sourceStatus = Object.keys(prevState.clients).find(key => prevState.clients[key].find(client => client.id === clientId));
 
       if (sourceStatus === targetStatus) {
-        // Rearrange within the same swimlane
         const clients = [...prevState.clients[sourceStatus]];
         const clientIndex = clients.findIndex(client => client.id === clientId);
         const client = clients.splice(clientIndex, 1)[0];
@@ -115,7 +107,6 @@ export default class Board extends React.Component {
           }
         };
       } else {
-        // Move to a different swimlane
         const sourceClients = [...prevState.clients[sourceStatus]];
         const targetClients = [...prevState.clients[targetStatus]];
         const clientIndex = sourceClients.findIndex(client => client.id === clientId);
@@ -166,7 +157,7 @@ export default class Board extends React.Component {
       id: companyDetails[0],
       name: companyDetails[1],
       description: companyDetails[2],
-      status: 'backlog', // Set status to 'backlog' for all clients
+      status: 'backlog',
     }));
   }
 
